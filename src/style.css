@@ -1,0 +1,230 @@
+/* --- VARIABLES GLOBALES --- */
+:root {
+    /* Paleta de Colores Modernos */
+    --bg-color: #F8FAFC;         /* Fondo gris muy claro */
+    --text-main: #1E293B;        /* Texto oscuro (no negro puro para que no canse) */
+    --text-muted: #64748B;       /* Texto secundario */
+    
+    --primary-color: #3B82F6;    /* Azul para el Módulo de Aula */
+    --primary-hover: #2563EB;
+    
+    --secondary-color: #10B981;  /* Verde para el Módulo de Administración */
+    --secondary-hover: #059669;
+
+    --card-bg: #FFFFFF;          /* Fondo de las tarjetas blancas */
+    --border-color: #E2E8F0;     /* Color sutil para bordes */
+    
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.05), 0 4px 6px rgba(0,0,0,0.05);
+    
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+/* --- RESET BÁSICO --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+/* --- BARRA DE NAVEGACIÓN (HEADER) --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: -0.5px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.user-profile img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--border-color);
+}
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.dashboard-container {
+    max-width: 1000px;
+    margin: 3rem auto;
+    padding: 0 2rem;
+}
+
+.welcome-section {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.welcome-section h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-section p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* --- CUADRÍCULA DE MÓDULOS (LOS BOTONES GRANDES) --- */
+.modules-grid {
+    display: grid;
+    /* Esto hace que se pongan lado a lado en PC, y uno debajo de otro en celulares */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* Estilo base de las tarjetas */
+.module-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem;
+    text-decoration: none;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+/* Animación al pasar el mouse por encima (Hover) */
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Iconos dentro de las tarjetas */
+.card-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.card-icon svg {
+    width: 32px;
+    height: 32px;
+}
+
+/* Textos de las tarjetas */
+.module-card h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.module-card p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    flex-grow: 1; /* Empuja el botón "Ingresar" hacia abajo */
+}
+
+.btn-text {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-top: auto;
+}
+
+/* --- COLORES ESPECÍFICOS DE CADA MÓDULO --- */
+
+/* Módulo Operativo (Azul) */
+.module-card.primary {
+    border-top: 4px solid var(--primary-color);
+}
+
+.module-card.primary .card-icon {
+    background-color: #EFF6FF;
+    color: var(--primary-color);
+}
+
+.module-card.primary .btn-text {
+    color: var(--primary-color);
+}
+
+.module-card.primary:hover .btn-text {
+    color: var(--primary-hover);
+}
+
+/* Módulo Administrativo (Verde) */
+.module-card.secondary {
+    border-top: 4px solid var(--secondary-color);
+}
+
+.module-card.secondary .card-icon {
+    background-color: #ECFDF5;
+    color: var(--secondary-color);
+}
+
+.module-card.secondary .btn-text {
+    color: var(--secondary-color);
+}
+
+.module-card.secondary:hover .btn-text {
+    color: var(--secondary-hover);
+}
+
+
+/* Estilos adicionales para subpáginas */
+.subpage .navbar { margin-bottom: 0; }
+.breadcrumb { font-size: 0.85rem; color: var(--text-muted); }
+.breadcrumb a { color: var(--primary-color); text-decoration: none; }
+
+.section-header { margin-bottom: 2rem; }
+.card { background: white; padding: 1.5rem; border-radius: var(--radius-lg); border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); }
+
+/* Tablas de datos */
+.data-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.data-table th { text-align: left; padding: 0.75rem; border-bottom: 2px solid var(--bg-color); color: var(--text-muted); font-size: 0.85rem; }
+.data-table td { padding: 0.75rem; border-bottom: 1px solid var(--bg-color); }
+
+/* Pills de estado */
+.status-pill { border: none; padding: 4px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 0.8rem; }
+.present { background: #DCFCE7; color: #166534; }
+.absent { background: #FEE2E2; color: #991B1B; }
+
+/* Dashboard Grids */
+.attendance-grid, .admin-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+
+/* Otros elementos */
+textarea { width: 100%; min-height: 150px; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1rem; margin-top: 1rem; font-family: inherit; }
+.tag-cloud { display: flex; gap: 8px; margin: 1rem 0; }
+.tag { background: var(--bg-color); padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; color: var(--text-muted); }
+.save-btn, .upload-btn { width: 100%; padding: 0.75rem; border-radius: var(--radius-md); border: none; font-weight: 600; cursor: pointer; margin-top: 1rem; }
+
+.doc-list { list-style: none; margin: 1rem 0; }
+.doc-list li { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--bg-color); font-size: 0.9rem; }
+.stat-card { background: var(--bg-color); padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1rem; display: flex; flex-direction: column; }
+.stat-card .label { font-size: 0.75rem; color: var(--text-muted); }
+.stat-card .value { font-size: 1.25rem; font-weight: 700; color: var(--secondary-color); }
