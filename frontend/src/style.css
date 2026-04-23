@@ -116,6 +116,56 @@ body {
 }
 
 /* --- CUADRÍCULA DE MÓDULOS (HOME) --- */
+.landing-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.sidebar {
+    width: 260px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 1rem;
+    align-self: flex-start;
+}
+
+.sidebar h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.sidebar nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sidebar-item {
+    display: block;
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    color: var(--text-main);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.sidebar-item:hover,
+.sidebar-item.active-link {
+    background: #f1f5f9;
+    border-color: var(--border-color);
+}
+
+.main-content {
+    flex: 1;
+}
+
 .modules-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -309,6 +359,18 @@ textarea {
 }
 
 /* --- RESPONSIVIDAD BÁSICA (MÓVILES) --- */
+@media (max-width: 1024px) {
+    .landing-layout {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        position: static;
+        top: auto;
+    }
+}
+
 @media (max-width: 768px) {
     .attendance-grid, .admin-grid { 
         grid-template-columns: 1fr; 
