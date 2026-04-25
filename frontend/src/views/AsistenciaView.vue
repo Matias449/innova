@@ -1,13 +1,6 @@
 <template>
   <div class="subpage">
-    <header class="navbar">
-        <div class="logo">
-            <router-link to="/" style="text-decoration: none; color: inherit;"><h1>EduSync</h1></router-link>
-        </div>
-        <nav class="breadcrumb">
-            <router-link to="/">Inicio</router-link> / <span>Gestión de Aula</span>
-        </nav>
-    </header>
+
 
     <main class="dashboard-container">
         <section class="section-header">

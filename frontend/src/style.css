@@ -36,8 +36,93 @@ body {
     line-height: 1.6;
 }
 
-/* --- BARRA DE NAVEGACIÓN (HEADER) --- */
-.navbar {
+/* --- APP LAYOUT (GLOBAL) --- */
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.global-sidebar {
+    width: 260px;
+    background-color: var(--card-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease-in-out, opacity 0.3s ease-in-out;
+    overflow: hidden;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    box-shadow: var(--shadow-sm);
+    z-index: 100;
+}
+
+.global-sidebar.sidebar-closed {
+    width: 0;
+    opacity: 0;
+    border-right: none;
+}
+
+.sidebar-header {
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: -0.5px;
+    margin: 0;
+}
+
+.sidebar-nav {
+    padding: 1.5rem 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+}
+
+.nav-section-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+    padding-left: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-item {
+    display: block;
+    padding: 0.9rem 1rem;
+    border-radius: 10px;
+    color: var(--text-main);
+    text-decoration: none;
+    border: 1px solid transparent;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    font-weight: 500;
+}
+
+.sidebar-item:hover,
+.sidebar-item.active-link {
+    background: #f1f5f9;
+    color: var(--primary-color);
+    border-color: var(--border-color);
+}
+
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.global-navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -45,17 +130,41 @@ body {
     background-color: var(--card-bg);
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 90;
 }
 
-.subpage .navbar { 
-    margin-bottom: 0; 
+.navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
 }
 
-.logo h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
+.system-title {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.menu-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
     color: var(--primary-color);
-    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    border-radius: var(--radius-md);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.menu-btn:hover {
+    background-color: var(--border-color);
+    transform: scale(1.05);
 }
 
 .user-profile {
@@ -73,14 +182,10 @@ body {
     border: 2px solid var(--border-color);
 }
 
-.breadcrumb { 
-    font-size: 0.85rem; 
-    color: var(--text-muted); 
-}
-
-.breadcrumb a { 
-    color: var(--primary-color); 
-    text-decoration: none; 
+.page-content {
+    padding: 2rem;
+    flex: 1;
+    overflow-x: hidden;
 }
 
 /* --- CONTENEDOR PRINCIPAL --- */
@@ -120,46 +225,6 @@ body {
     display: flex;
     gap: 2rem;
     align-items: flex-start;
-}
-
-.sidebar {
-    width: 260px;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    box-shadow: var(--shadow-sm);
-    position: sticky;
-    top: 1rem;
-    align-self: flex-start;
-}
-
-.sidebar h3 {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: 1rem;
-}
-
-.sidebar nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.sidebar-item {
-    display: block;
-    padding: 0.9rem 1rem;
-    border-radius: 10px;
-    color: var(--text-main);
-    text-decoration: none;
-    border: 1px solid transparent;
-    transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.sidebar-item:hover,
-.sidebar-item.active-link {
-    background: #f1f5f9;
-    border-color: var(--border-color);
 }
 
 .main-content {
@@ -364,10 +429,18 @@ textarea {
         flex-direction: column;
     }
 
-    .sidebar {
-        width: 100%;
-        position: static;
-        top: auto;
+    .global-sidebar {
+        position: fixed;
+        left: 0;
+        z-index: 1000;
+        height: 100vh;
+        transform: translateX(0);
+    }
+    
+    .global-sidebar.sidebar-closed {
+        transform: translateX(-100%);
+        width: 260px; /* Mantener el ancho para que la animación sea correcta */
+        opacity: 1;
     }
 }
 
