@@ -1,9 +1,12 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useAuth } from './composables/useAuth'
 
 const route = useRoute()
 const router = useRouter()
+const { currentUser, USERS, hasAccessTo, changeUser } = useAuth()
+
 const isSidebarOpen = ref(true)
 const toggleSidebar = () => {
   isSidebarOpen.value = !isSidebarOpen.value
@@ -18,13 +21,13 @@ const toggleSidebar = () => {
       </div>
       <nav class="sidebar-nav">
         <router-link to="/" class="sidebar-item" exact-active-class="active-link" @click="isSidebarOpen = false">Inicio</router-link>
-        <router-link to="/asistencia" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Asistencia</router-link>
-        <router-link to="/ninos" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Niños</router-link>
-        <router-link to="/personal" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Personal</router-link>
-        <router-link to="/reportes" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Reportes</router-link>
-        <router-link to="/alertas" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Alertas</router-link>
-        <router-link to="/administracion" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Documentos</router-link>
-        <router-link to="/configuracion" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Config.</router-link>
+        <router-link v-if="hasAccessTo.aula" to="/aula" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Aula Diaria</router-link>
+        <router-link v-if="hasAccessTo.asistencia_dashboard" to="/asistencia" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Global Asistencia</router-link>
+        <router-link v-if="hasAccessTo.ninos" to="/ninos" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Niños</router-link>
+        <router-link v-if="hasAccessTo.reportes" to="/reportes" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Reportes</router-link>
+        <router-link v-if="hasAccessTo.documentos" to="/administracion" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Documentos</router-link>
+        <router-link v-if="hasAccessTo.finanzas" to="/finanzas" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Finanzas</router-link>
+        <router-link v-if="hasAccessTo.configuracion" to="/configuracion" class="sidebar-item" active-class="active-link" @click="isSidebarOpen = false">Configuración</router-link>
       </nav>
     </aside>
 
@@ -43,7 +46,16 @@ const toggleSidebar = () => {
           <span class="system-title">SISTEMA INTEGRADO EDUCATIVO</span>
         </div>
         <div class="user-profile">
-          <span>[👤]</span>
+          <span style="font-size: 14px; color: var(--text-muted); margin-right: 8px;">Viendo como:</span>
+          <select 
+            :value="currentUser.id" 
+            @change="e => { changeUser(e.target.value); router.push('/'); isSidebarOpen = false }"
+            style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-color); font-weight: 600; color: var(--primary-color);"
+          >
+            <option v-for="user in USERS" :key="user.id" :value="user.id">
+              {{ user.name }}
+            </option>
+          </select>
         </div>
       </header>
 
