@@ -2,7 +2,7 @@
   <div class="home-view">
     <section class="welcome-section">
       <h2>Bienvenida, {{ currentUser.name.split(' ')[0] }}</h2>
-      <p>Selecciona el módulo al que deseas ingresar para comenzar tu jornada.</p>
+      <p>Selecciona un módulo para comenzar.</p>
     </section>
 
     <section class="modules-grid">
@@ -19,12 +19,12 @@
         <div class="card-icon">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
         </div>
-        <h3>Administración Institucional</h3>
+        <h3>Gestión Documental</h3>
         <p>Documentos MINEDUC, gestión de pagos y certificados oficiales.</p>
-        <span class="btn-text">Ingresar a Administración &rarr;</span>
+        <span class="btn-text">Ingresar a Gestión Documental &rarr;</span>
       </router-link>
 
-      <router-link v-if="hasAccessTo.finanzas" to="/finanzas" class="module-card" style="background: linear-gradient(135deg, #10b981, #059669); color: white;">
+      <router-link v-if="hasAccessTo.finanzas" to="/finanzas" class="module-card" style="background: linear-gradient(135deg, #047857, #065F46); color: white;">
         <div class="card-icon" style="background: rgba(255,255,255,0.15); color: white;">
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </div>

@@ -5,11 +5,11 @@
     --text-main: #1E293B;        /* Texto oscuro (no negro puro para descansar la vista) */
     --text-muted: #64748B;       /* Texto secundario */
     
-    --primary-color: #3B82F6;    /* Azul para el Módulo de Aula */
-    --primary-hover: #2563EB;
-    
-    --secondary-color: #10B981;  /* Verde para el Módulo de Administración */
-    --secondary-hover: #059669;
+    --primary-color: #1D4ED8;    /* Azul para el Módulo de Aula */
+    --primary-hover: #1E40AF;
+
+    --secondary-color: #16A34A;  /* Verde para el Módulo de Administración */
+    --secondary-hover: #15803D;
 
     --card-bg: #FFFFFF;          /* Fondo de las tarjetas blancas */
     --border-color: #E2E8F0;     /* Color sutil para bordes */
@@ -66,16 +66,46 @@ body {
 }
 
 .sidebar-header {
-    padding: 1.5rem 2rem;
+    padding: 1.25rem 1.5rem;
     border-bottom: 1px solid var(--border-color);
 }
 
-.logo-text {
-    font-size: 1.5rem;
+.brand-block {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.brand-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    overflow: hidden;
+}
+
+.brand-name {
+    font-size: 1.15rem;
     font-weight: 700;
-    color: var(--primary-color);
-    letter-spacing: -0.5px;
-    margin: 0;
+    color: var(--secondary-color);
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+}
+
+.brand-slogan {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar-nav {
@@ -142,11 +172,10 @@ body {
 }
 
 .system-title {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: var(--text-main);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--secondary-color);
+    letter-spacing: -0.2px;
 }
 
 .menu-btn {
@@ -303,10 +332,298 @@ body {
 .module-card.secondary:hover .btn-text { color: var(--secondary-hover); }
 
 /* --- GRILLAS DE SUBPÁGINAS --- */
-.attendance-grid, .admin-grid { 
-    display: grid; 
-    grid-template-columns: 2fr 1fr; 
-    gap: 1.5rem; 
+.attendance-grid, .admin-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+.admin-grid-full {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.admin-grid-full .rendicion-lista,
+.admin-grid-full .rendicion-mes-card {
+    grid-column: 1 / -1;
+}
+
+/* --- CARD HEAD (título + acción inline) --- */
+.card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+
+.card-head h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.btn-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    cursor: pointer;
+    border: 1px solid var(--secondary-color);
+    border-radius: var(--radius-md);
+    padding: 0.3rem 0.75rem;
+    background: transparent;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+}
+
+.btn-add:hover {
+    background: var(--secondary-color);
+    color: #fff;
+}
+
+/* --- DOC LIST --- */
+.doc-list {
+    list-style: none;
+}
+
+.doc-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.doc-list li:last-child {
+    border-bottom: none;
+}
+
+.doc-info {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    overflow: hidden;
+}
+
+.doc-ext {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: var(--secondary-color);
+    background: #ECFDF5;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.doc-name {
+    font-size: 0.875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.doc-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.doc-empty {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    padding: 1rem 0;
+    text-align: center;
+    justify-content: center;
+}
+
+/* --- RENDICIÓN FORM --- */
+.rendicion-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.rendicion-form input[type="text"],
+.rendicion-form select {
+    width: 100%;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-family: inherit;
+    background: var(--bg-color);
+    color: var(--text-main);
+}
+
+.rendicion-form input[type="text"]:focus,
+.rendicion-form select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    background: #fff;
+}
+
+.file-drop {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 0.85rem;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.file-drop:hover,
+.file-drop.has-file {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+    background: #F0FDF4;
+}
+
+.file-drop span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-submit {
+    padding: 0.65rem;
+    background: var(--secondary-color);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.btn-submit:hover { background: var(--secondary-hover); }
+
+.btn-submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* --- PILLS Y UTILIDADES --- */
+.tipo-pill {
+    display: inline-block;
+    background: #EFF6FF;
+    color: var(--primary-color);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.text-muted {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* --- RENDICIÓN MENSUAL --- */
+.mes-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-color);
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    text-transform: capitalize;
+}
+
+.rendicion-mes-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.rendicion-mes-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.rendicion-mes-title h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.rendicion-mes-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.estado-pill {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.estado-rendido {
+    background: #DCFCE7;
+    color: #166534;
+}
+
+.estado-proceso {
+    background: #FEF9C3;
+    color: #854D0E;
+}
+
+.btn-estado {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.3rem 0.85rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-estado:hover {
+    border-color: var(--text-muted);
+    color: var(--text-main);
+}
+
+.btn-exportar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.3rem 0.85rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--primary-color);
+    background: transparent;
+    color: var(--primary-color);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-exportar:hover {
+    background: var(--primary-color);
+    color: #fff;
 }
 
 /* --- TABLAS DE DATOS (ASISTENCIA) --- */
@@ -445,7 +762,7 @@ textarea {
 }
 
 @media (max-width: 768px) {
-    .attendance-grid, .admin-grid { 
-        grid-template-columns: 1fr; 
+    .attendance-grid, .admin-grid, .admin-grid-full {
+        grid-template-columns: 1fr;
     }
 }
