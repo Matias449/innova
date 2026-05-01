@@ -10,5 +10,7 @@ urlpatterns = [
     path('aula/asistencia/bulk/', views.aula_asistencia_bulk, name='aula-asistencia-bulk'),
     path('aula/anotaciones/', views.aula_anotaciones, name='aula-anotaciones'),
     path('aula/planificaciones/', views.aula_planificaciones, name='aula-planificaciones'),
+    path('aula/asistencia/dia/', views.aula_asistencia_dia, name='aula-asistencia-dia'),
+    path('asistencia/por-curso/', views.asistencia_por_curso, name='asistencia-por-curso'),
     path('finanzas/dashboard/', views.finanzas_dashboard, name='finanzas-dashboard'),
 ]

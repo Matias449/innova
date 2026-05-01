@@ -3,7 +3,7 @@
     <main class="dashboard-container">
       <section class="section-header">
         <div class="header-titles">
-          <h2>🧸 Información de Niños/Párvulos</h2>
+          <h2>Información de Niños / Párvulos</h2>
           <p>Accede a la ficha y seguimiento de cada estudiante.</p>
         </div>
         <div class="header-actions">
@@ -74,6 +74,12 @@
         <div class="list-header">
           <h3>Lista de Estudiantes ({{ filteredAndSortedNinos.length }})</h3>
           <div class="filters">
+            <div class="search-group">
+              <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"></path>
+              </svg>
+              <input type="text" v-model="searchQuery" placeholder="Buscar por nombre..." class="search-input" />
+            </div>
             <div class="filter-group">
               <label>Curso:</label>
               <select v-model="filterCurso" class="filter-select">
@@ -133,6 +139,7 @@ const showForm = ref(false)
 // Filters State
 const filterCurso = ref('Todos')
 const sortByLastName = ref(false)
+const searchQuery = ref('')
 
 const form = ref({
   nombres: '',
@@ -151,17 +158,23 @@ const availableCursos = computed(() => {
 
 const filteredAndSortedNinos = computed(() => {
   let result = [...ninos.value]
-  
-  // Filter by course
+
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase()
+    result = result.filter(n =>
+      n.nombres.toLowerCase().includes(q) ||
+      n.apellidos.toLowerCase().includes(q)
+    )
+  }
+
   if (filterCurso.value !== 'Todos') {
     result = result.filter(n => n.curso === filterCurso.value)
   }
-  
-  // Sort by last name
+
   if (sortByLastName.value) {
     result.sort((a, b) => a.apellidos.localeCompare(b.apellidos))
   }
-  
+
   return result
 })
 
@@ -259,6 +272,38 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.search-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color, #e0e0e0);
+  background-color: var(--bg-color);
+  color: var(--text-muted);
+  transition: border-color 0.3s;
+}
+
+.search-group:focus-within {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  width: 180px;
+}
+
+.search-input::placeholder {
+  color: var(--text-muted);
 }
 
 .filter-group {

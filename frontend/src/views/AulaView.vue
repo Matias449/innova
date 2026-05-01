@@ -64,7 +64,33 @@
           </div>
         </div>
 
-        <!-- SECCIÓN 3: BITÁCORAS / ANOTACIONES -->
+        <!-- SECCIÓN 3: LISTA DE ESTUDIANTES DEL DÍA -->
+        <div class="card panel-card full-width">
+          <div class="panel-header">
+            <h3>Estudiantes del Día</h3>
+            <span class="fecha-hoy">{{ fechaHoyStr }}</span>
+          </div>
+          <div v-if="asistenciaHoy.length === 0" class="lista-estado-vacio">
+            <p>No hay asistencia registrada para hoy. Inicia el registro con el botón de arriba.</p>
+          </div>
+          <div v-else class="lista-estudiantes-grid">
+            <div
+              v-for="reg in asistenciaHoy"
+              :key="reg.nino_id"
+              :class="['estudiante-chip', reg.estado.toLowerCase()]"
+            >
+              <div class="chip-avatar">{{ reg.nombres.charAt(0) }}{{ reg.apellidos.charAt(0) }}</div>
+              <div class="chip-info">
+                <span class="chip-nombre">{{ reg.apellidos }}, {{ reg.nombres }}</span>
+                <span :class="['chip-badge', reg.estado.toLowerCase()]">
+                  {{ reg.estado }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: BITÁCORAS / ANOTACIONES -->
         <div class="card panel-card full-width">
           <div class="panel-header">
             <h3>📖 Anotación de Desarrollo</h3>
@@ -237,6 +263,19 @@ const currentIndex = ref(0)
 const registrosTemporales = ref([])
 const savingAsistencia = ref(false)
 
+// Lista asistencia del día
+const asistenciaHoy = ref([])
+
+const fetchAsistenciaHoy = async () => {
+  if (!selectedCurso.value) return
+  try {
+    const res = await fetch(`${API_BASE_URL}/aula/asistencia/dia/?curso=${encodeURIComponent(selectedCurso.value)}&fecha=${fechaHoyISO}`)
+    if (res.ok) asistenciaHoy.value = await res.json()
+  } catch (e) {
+    console.error('Error fetching asistencia del día:', e)
+  }
+}
+
 // Estado de Anotación
 const anotacion = ref({ nino_id: '', descripcion: '' })
 const savingAnotacion = ref(false)
@@ -285,19 +324,17 @@ const fetchPlanificacion = async () => {
 
 const fetchData = async () => {
   if (!selectedCurso.value) return
-  
-  // Resetear estados
+
   asistenciaModalOpen.value = false
   asistenciaFinalizada.value = false
   registrosTemporales.value = []
-  
+
   try {
-    // Traer estudiantes
-    const resEst = await fetch(`${API_BASE_URL}/aula/estudiantes/?curso=${selectedCurso.value}`)
+    const resEst = await fetch(`${API_BASE_URL}/aula/estudiantes/?curso=${encodeURIComponent(selectedCurso.value)}`)
     if (resEst.ok) estudiantes.value = await resEst.json()
-    
-    // Traer planificación
+
     fetchPlanificacion()
+    fetchAsistenciaHoy()
   } catch (error) {
     console.error("Error fetching data:", error)
   }
@@ -392,6 +429,7 @@ const guardarAsistenciaEnBD = async () => {
     if (res.ok) {
       alert("¡Asistencia registrada oficialmente!")
       asistenciaModalOpen.value = false
+      fetchAsistenciaHoy()
     }
   } catch (e) {
     alert("Error al guardar asistencia.")
@@ -884,11 +922,85 @@ const guardarAnotacion = async () => {
   flex-wrap: wrap;
 }
 
+.lista-estado-vacio {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-style: italic;
+  background: #f8fafc;
+  border-radius: var(--radius-md);
+}
+
+.lista-estudiantes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.estudiante-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: #f8fafc;
+  transition: box-shadow 0.15s;
+}
+
+.estudiante-chip:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+
+.estudiante-chip.presente { border-left: 4px solid #22c55e; background: #f0fdf4; }
+.estudiante-chip.ausente { border-left: 4px solid #ef4444; background: #fef2f2; }
+.estudiante-chip.atraso { border-left: 4px solid #f59e0b; background: #fffbeb; }
+.estudiante-chip.justificado { border-left: 4px solid #6366f1; background: #eef2ff; }
+
+.chip-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.chip-nombre {
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-main);
+}
+
+.chip-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.chip-badge.presente { color: #166534; }
+.chip-badge.ausente { color: #991b1b; }
+.chip-badge.atraso { color: #92400e; }
+.chip-badge.justificado { color: #3730a3; }
+
 @media (max-width: 768px) {
   .aula-grid { grid-template-columns: 1fr; }
   .action-buttons { flex-direction: column; }
   .modal-content { padding: 1.5rem; }
   .summary-grid { flex-direction: column; }
   .modal-actions { flex-direction: column; }
+  .lista-estudiantes-grid { grid-template-columns: 1fr; }
 }
 </style>
