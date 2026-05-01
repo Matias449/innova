@@ -3,11 +3,11 @@
     <main class="dashboard-container">
       <section class="section-header">
         <div class="header-titles">
-          <h2>💰 Salud Financiera</h2>
+          <h2>Salud Financiera</h2>
           <p>Monitoreo de ingresos, egresos y rentabilidad institucional.</p>
         </div>
         <button class="btn-secondary" @click="fetchData" :disabled="loading">
-          {{ loading ? 'Actualizando...' : '↻ Actualizar Datos' }}
+          {{ loading ? 'Actualizando...' : 'Actualizar Datos' }}
         </button>
       </section>
 
@@ -17,7 +17,7 @@
       </div>
 
       <div v-else-if="error" class="error-state">
-        <p>⚠️ Error al cargar los datos financieros.</p>
+        <p>Error al cargar los datos financieros.</p>
       </div>
 
       <div v-else class="finanzas-grid">
@@ -31,7 +31,7 @@
           <div class="kpi-card expense">
             <h3>Egresos Totales (YTD)</h3>
             <div class="kpi-value">{{ formatMoney(kpis.totalEgresos) }}</div>
-            <p class="kpi-trend warning">⚠️ Cuidado con gastos imprevistos</p>
+            <p class="kpi-trend warning">Cuidado con gastos imprevistos</p>
           </div>
           <div class="kpi-card balance" :class="{ negative: kpis.balanceNeto < 0 }">
             <h3>Balance Neto</h3>

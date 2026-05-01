@@ -3,14 +3,14 @@
     <main class="dashboard-container">
       <section class="section-header">
         <div class="header-titles">
-          <h2>🎒 Aula Diaria</h2>
+          <h2>Aula Diaria</h2>
           <p>Herramientas de gestión diaria para educadoras.</p>
         </div>
         <div class="custom-selector">
           <label>Curso actual: </label>
           <div class="dropdown-wrapper">
             <button class="selector-btn" @click="courseDropdownOpen = !courseDropdownOpen">
-              <span class="selector-text">{{ selectedCurso || '🔍 Buscar y seleccionar curso...' }}</span>
+              <span class="selector-text">{{ selectedCurso || 'Seleccionar curso...' }}</span>
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </button>
             
@@ -39,7 +39,7 @@
         <!-- SECCIÓN 1: PLANIFICACIÓN -->
         <div class="card panel-card">
           <div class="panel-header">
-            <h3>📝 Planificación del Día</h3>
+            <h3>Planificación del Día</h3>
             <input type="date" v-model="selectedPlanDate" @change="fetchPlanificacion" class="date-picker-input" />
           </div>
           <textarea 
@@ -55,12 +55,12 @@
         <!-- SECCIÓN 2: ASISTENCIA (Flujo Interactivo 1 a 1) -->
         <div class="card panel-card">
           <div class="panel-header">
-            <h3>✅ Registro de Asistencia</h3>
+            <h3>Registro de Asistencia</h3>
           </div>
           
           <div class="asistencia-intro">
             <p class="text-muted mb-3">Toma asistencia preguntando a viva voz. Al iniciar se abrirá un modo enfocado para evitar distracciones.</p>
-            <button class="btn-action w-100" @click="iniciarAsistencia">🚀 Iniciar Registro de Asistencia</button>
+            <button class="btn-action w-100" @click="iniciarAsistencia">Iniciar Registro de Asistencia</button>
           </div>
         </div>
 
@@ -93,7 +93,7 @@
         <!-- SECCIÓN 4: BITÁCORAS / ANOTACIONES -->
         <div class="card panel-card full-width">
           <div class="panel-header">
-            <h3>📖 Anotación de Desarrollo</h3>
+            <h3>Anotación de Desarrollo</h3>
           </div>
           <p class="text-muted mb-2">Registra un hito o incidente para la ficha de un niño.</p>
           
@@ -144,7 +144,7 @@
     <!-- Modal de Asistencia Enfocada -->
     <div v-if="asistenciaModalOpen" class="attendance-modal">
       <div class="modal-content">
-        <button class="close-modal-btn" @click="cancelarAsistencia">✕</button>
+        <button class="close-modal-btn" @click="cancelarAsistencia">&times;</button>
         
         <!-- Flujo 1 a 1 -->
         <div v-if="!asistenciaFinalizada" class="asistencia-flow">
@@ -165,9 +165,9 @@
           </div>
 
           <div class="action-buttons">
-            <button class="btn-ausente" @click="registrar('Ausente')">❌ Ausente</button>
-            <button class="btn-atraso" @click="registrar('Atraso')">⏱️ Atraso</button>
-            <button class="btn-presente" @click="registrar('Presente')">✅ Presente</button>
+            <button class="btn-ausente" @click="registrar('Ausente')">Ausente</button>
+            <button class="btn-atraso" @click="registrar('Atraso')">Atraso</button>
+            <button class="btn-presente" @click="registrar('Presente')">Presente</button>
           </div>
           
           <button v-if="currentIndex > 0" class="btn-back mt-4" @click="volverAtras">
@@ -178,7 +178,7 @@
         <!-- Resumen Final -->
         <div v-else class="asistencia-summary-modal">
           <div class="modal-header">
-            <h3>✅ Registro Completado</h3>
+            <h3>Registro Completado</h3>
             <p>Revisa el resumen antes de enviarlo oficialmente.</p>
           </div>
           
@@ -210,7 +210,7 @@
                   <td>{{ reg.nombre }}</td>
                   <td>
                     <span :class="['badge', reg.estado.toLowerCase()]">
-                      {{ reg.estado === 'Presente' ? '✅ Presente' : (reg.estado === 'Ausente' ? '❌ Ausente' : '⏱️ Atraso') }}
+                      {{ reg.estado }}
                     </span>
                   </td>
                 </tr>
@@ -221,7 +221,7 @@
           <div class="modal-actions mt-4">
             <button class="btn-back" @click="volverAtrasDesdeResumen">← Corregir al último alumno</button>
             <button class="btn-primary" @click="guardarAsistenciaEnBD" :disabled="savingAsistencia">
-              {{ savingAsistencia ? 'Guardando...' : '💾 Confirmar y Guardar Asistencia' }}
+              {{ savingAsistencia ? 'Guardando...' : 'Confirmar y Guardar Asistencia' }}
             </button>
           </div>
         </div>
@@ -292,7 +292,7 @@ const filteredEstudiantes = computed(() => {
 })
 
 const selectedNinoName = computed(() => {
-  if (!anotacion.value.nino_id) return '🔍 Buscar y seleccionar estudiante...'
+  if (!anotacion.value.nino_id) return 'Seleccionar estudiante...'
   const n = estudiantes.value.find(e => e.id === anotacion.value.nino_id)
   return n ? `${n.nombres} ${n.apellidos}` : 'Seleccionar estudiante...'
 })

@@ -17,7 +17,13 @@ const toggleSidebar = () => {
   <div class="app-layout">
     <aside class="global-sidebar" :class="{ 'sidebar-closed': !isSidebarOpen }">
       <div class="sidebar-header">
-        <h1 class="logo-text">LOGO</h1>
+        <div class="brand-block">
+          <img src="./assets/nidium-logo.svg" alt="nidium logo" class="brand-logo" />
+          <div class="brand-text">
+            <span class="brand-name">nidium</span>
+            <span class="brand-slogan">gestiona, conecta, acompaña</span>
+          </div>
+        </div>
       </div>
       <nav class="sidebar-nav">
         <router-link to="/" class="sidebar-item" exact-active-class="active-link" @click="isSidebarOpen = false">Inicio</router-link>
@@ -43,7 +49,7 @@ const toggleSidebar = () => {
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             INICIO
           </button>
-          <span class="system-title">SISTEMA INTEGRADO EDUCATIVO</span>
+          <span class="system-title">nidium</span>
         </div>
         <div class="user-profile">
           <span style="font-size: 14px; color: var(--text-muted); margin-right: 8px;">Viendo como:</span>
