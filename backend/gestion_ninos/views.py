@@ -261,6 +261,54 @@ def aula_planificaciones(request):
             return JsonResponse({'error': str(e)}, status=400)
 
 @csrf_exempt
+def aula_asistencia_dia(request):
+    if request.method == 'GET':
+        curso = request.GET.get('curso')
+        fecha_str = request.GET.get('fecha')
+        if not curso or not fecha_str:
+            return JsonResponse({'error': 'Faltan parámetros curso o fecha'}, status=400)
+        try:
+            fecha = timezone.datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            registros = RegistroAsistencia.objects.filter(
+                nino__curso=curso, fecha=fecha
+            ).select_related('nino').order_by('nino__apellidos', 'nino__nombres')
+            data = [{
+                'nino_id': r.nino.id,
+                'nombres': r.nino.nombres,
+                'apellidos': r.nino.apellidos,
+                'estado': r.estado
+            } for r in registros]
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+def asistencia_por_curso(request):
+    if request.method == 'GET':
+        cursos = list(Nino.objects.values_list('curso', flat=True).distinct().order_by('curso'))
+        result = []
+        for curso in cursos:
+            qs = RegistroAsistencia.objects.filter(nino__curso=curso)
+            total = qs.count()
+            if total == 0:
+                continue
+            presentes = qs.filter(estado='Presente').count()
+            ausentes = qs.filter(estado='Ausente').count()
+            atrasos = qs.filter(estado='Atraso').count()
+            justificados = qs.filter(estado='Justificado').count()
+            tasa = round((presentes / total) * 100, 1)
+            result.append({
+                'curso': curso,
+                'total': total,
+                'presentes': presentes,
+                'ausentes': ausentes,
+                'atrasos': atrasos,
+                'justificados': justificados,
+                'tasa_asistencia': tasa,
+            })
+        return JsonResponse(result, safe=False)
+
+@csrf_exempt
 def finanzas_dashboard(request):
     if request.method == 'GET':
         # Datos simulados de Enero a Agosto (CLP)
