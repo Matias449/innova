@@ -28,23 +28,36 @@ def is_holiday(check_date):
 
     return False
 
-def get_attendance_state(check_date):
+def get_attendance_state(check_date, is_chronic=False):
     month = check_date.month
     
     # Probabilidades base (Presente, Ausente, Atraso, Justificado)
-    probs = [0.88, 0.05, 0.04, 0.03]
+    if is_chronic:
+        # Estudiantes crónicos: solo 60-65% presencia
+        probs = [0.62, 0.20, 0.10, 0.08]
+    else:
+        probs = [0.88, 0.05, 0.04, 0.03]
     
     # Oleada de baja asistencia en Junio (virus respiratorios)
     if month == 6:
         # Tercera semana de junio: brote de virus
         if 15 <= check_date.day <= 25:
-            probs = [0.60, 0.25, 0.05, 0.10]
+            if is_chronic:
+                probs = [0.45, 0.35, 0.10, 0.10]
+            else:
+                probs = [0.60, 0.25, 0.05, 0.10]
         else:
-            probs = [0.75, 0.15, 0.05, 0.05]
+            if is_chronic:
+                probs = [0.55, 0.25, 0.10, 0.10]
+            else:
+                probs = [0.75, 0.15, 0.05, 0.05]
             
     # Julio (antes/despues de vacaciones) también baja
     elif month == 7:
-        probs = [0.80, 0.10, 0.05, 0.05]
+        if is_chronic:
+            probs = [0.60, 0.20, 0.10, 0.10]
+        else:
+            probs = [0.80, 0.10, 0.05, 0.05]
         
     rand = random.random()
     if rand < probs[0]: return 'Presente'
@@ -56,14 +69,17 @@ def populate_attendance():
     RegistroAsistencia.objects.all().delete()
     print("Registros de asistencia anteriores eliminados.")
     
-    ninos = Nino.objects.all()
-    print(f"Generando asistencia de Marzo a Agosto para {ninos.count()} niños...")
+    ninos = list(Nino.objects.all())
+    print(f"Generando asistencia de Marzo a Agosto para {len(ninos)} niños...")
     
     # Usaremos 2025 para tener un año completo y realista de marzo a agosto
     start_date = date(2025, 3, 3) # Lunes 3 de Marzo
     end_date = date(2025, 8, 29) # Viernes 29 de Agosto
     
     delta = timedelta(days=1)
+    
+    # Marcar primeros 10-15% de estudiantes como crónicos
+    chronic_indices = set(range(len(ninos) // 8))  # ~12% serán crónicos
     
     current_date = start_date
     registros_creados = 0
@@ -74,8 +90,9 @@ def populate_attendance():
     
     while current_date <= end_date:
         if current_date.weekday() < 5 and not is_holiday(current_date): # Lunes a Viernes y no feriado
-            for nino in ninos:
-                estado = get_attendance_state(current_date)
+            for idx, nino in enumerate(ninos):
+                is_chronic = idx in chronic_indices
+                estado = get_attendance_state(current_date, is_chronic=is_chronic)
                 registros_bulk.append(RegistroAsistencia(
                     nino=nino,
                     fecha=current_date,
@@ -95,6 +112,7 @@ def populate_attendance():
         registros_creados += len(registros_bulk)
         
     print(f"¡Proceso completado! Total de registros de asistencia creados: {registros_creados}")
+    print(f"Estudiantes crónicos: ~{len(chronic_indices)}")
 
 if __name__ == '__main__':
     populate_attendance()
