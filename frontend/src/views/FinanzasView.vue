@@ -21,6 +21,38 @@
       </div>
 
       <div v-else class="finanzas-grid">
+        <!-- Subsidio proyectado -->
+        <div v-if="subsidioProyectado" class="card subsidio-card">
+          <div class="subsidio-header">
+            <div>
+              <h3>Proyección de Subsidio — {{ subsidioProyectado.mes }}</h3>
+              <p class="subsidio-note">Valor parvulario JUNJI estimado: {{ formatMoney(VALOR_PARVULO) }} · Ajustar según tabla vigente</p>
+            </div>
+            <span class="subsidio-badge" :class="subsidioProyectado.tasa >= 85 ? 'badge-green' : 'badge-amber'">
+              Tasa proyectada: {{ subsidioProyectado.tasa }}%
+            </span>
+          </div>
+          <div class="subsidio-kpis">
+            <div class="subsidio-kpi">
+              <span class="subsidio-kpi-label">Subsidio Estimado</span>
+              <span class="subsidio-kpi-value">{{ formatMoney(subsidioProyectado.estimado) }}</span>
+              <span class="subsidio-kpi-sub">{{ subsidioProyectado.matriculados }} matriculados · {{ subsidioProyectado.diasHabiles }} días hábiles</span>
+            </div>
+            <div class="subsidio-kpi" v-if="subsidioProyectado.mesAnterior">
+              <span class="subsidio-kpi-label">Último Mes Real</span>
+              <span class="subsidio-kpi-value muted">{{ formatMoney(subsidioProyectado.mesAnterior) }}</span>
+              <span class="subsidio-kpi-sub">subsidio registrado</span>
+            </div>
+            <div class="subsidio-kpi" v-if="subsidioProyectado.mesAnterior">
+              <span class="subsidio-kpi-label">Diferencia Proyectada</span>
+              <span class="subsidio-kpi-value" :class="subsidioProyectado.diferencia >= 0 ? 'value-pos' : 'value-neg'">
+                {{ subsidioProyectado.diferencia >= 0 ? '+' : '' }}{{ formatMoney(subsidioProyectado.diferencia) }}
+              </span>
+              <span class="subsidio-kpi-sub">vs. mes anterior</span>
+            </div>
+          </div>
+        </div>
+
         <!-- KPIs -->
         <div class="kpi-container">
           <div class="kpi-card income">
@@ -125,6 +157,10 @@ const API_BASE_URL = 'http://localhost:8000/api'
 const data = ref(null)
 const loading = ref(true)
 const error = ref(false)
+const mlPrediccion = ref(null)
+const ninosCount = ref(0)
+
+const VALOR_PARVULO = 560000
 
 const fetchData = async () => {
   loading.value = true
@@ -142,8 +178,23 @@ const fetchData = async () => {
   }
 }
 
+const fetchSubsidioData = async () => {
+  try {
+    const [mlRes, ninosRes] = await Promise.all([
+      fetch(`${API_BASE_URL}/ml/prediccion/`),
+      fetch(`${API_BASE_URL}/ninos/`),
+    ])
+    if (mlRes.ok) mlPrediccion.value = await mlRes.json()
+    if (ninosRes.ok) {
+      const ninos = await ninosRes.json()
+      ninosCount.value = Array.isArray(ninos) ? ninos.length : (ninos.count || 0)
+    }
+  } catch { /* silent */ }
+}
+
 onMounted(() => {
   fetchData()
+  fetchSubsidioData()
 })
 
 const formatMoney = (amount) => {
@@ -152,13 +203,39 @@ const formatMoney = (amount) => {
 
 const kpis = computed(() => {
   if (!data.value) return { totalIngresos: 0, totalEgresos: 0, balanceNeto: 0, margen: 0 }
-  
+
   const totalIngresos = data.value.reduce((acc, curr) => acc + curr.ingreso_total, 0)
   const totalEgresos = data.value.reduce((acc, curr) => acc + curr.egreso_total, 0)
   const balanceNeto = totalIngresos - totalEgresos
   const margen = totalIngresos > 0 ? Math.round((balanceNeto / totalIngresos) * 100) : 0
 
   return { totalIngresos, totalEgresos, balanceNeto, margen }
+})
+
+const subsidioProyectado = computed(() => {
+  if (!mlPrediccion.value?.model_a) return null
+  const { tasa_predicha, mes_predicho, dias_habiles } = mlPrediccion.value.model_a
+  const matriculados = ninosCount.value
+  const diasHabiles = dias_habiles || 22
+  const estimado = Math.round(VALOR_PARVULO * (tasa_predicha / 100) * matriculados * diasHabiles)
+
+  let mesAnterior = null
+  let diferencia = null
+  if (data.value && data.value.length > 0) {
+    const ultimo = data.value[data.value.length - 1]
+    mesAnterior = ultimo.subsidios || 0
+    diferencia = estimado - mesAnterior
+  }
+
+  return {
+    mes: mes_predicho,
+    tasa: tasa_predicha,
+    estimado,
+    matriculados,
+    diasHabiles,
+    mesAnterior,
+    diferencia,
+  }
 })
 
 const chartData = computed(() => {
@@ -386,5 +463,80 @@ const chartOptions = {
 
 @media (max-width: 768px) {
   .kpi-container { grid-template-columns: 1fr; }
+}
+
+/* ── Subsidio proyectado card ── */
+.subsidio-card {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--primary-color, #3B82F6);
+}
+
+.subsidio-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.subsidio-header h3 {
+  margin: 0 0 0.25rem 0;
+  color: var(--text-main);
+  font-size: 1rem;
+}
+
+.subsidio-note {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.subsidio-badge {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.badge-green { background: #dcfce7; color: #166534; }
+.badge-amber { background: #fef9c3; color: #92400e; }
+
+.subsidio-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+}
+
+.subsidio-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.subsidio-kpi-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+}
+
+.subsidio-kpi-value {
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.5px;
+}
+
+.subsidio-kpi-value.muted { color: var(--text-muted); }
+.subsidio-kpi-value.value-pos { color: #15803d; }
+.subsidio-kpi-value.value-neg { color: #b91c1c; }
+
+.subsidio-kpi-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 </style>

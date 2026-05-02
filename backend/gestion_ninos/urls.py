@@ -13,4 +13,8 @@ urlpatterns = [
     path('aula/asistencia/dia/', views.aula_asistencia_dia, name='aula-asistencia-dia'),
     path('asistencia/por-curso/', views.asistencia_por_curso, name='asistencia-por-curso'),
     path('finanzas/dashboard/', views.finanzas_dashboard, name='finanzas-dashboard'),
+    path('configuracion/perfil/', views.configuracion_perfil, name='configuracion-perfil'),
+    path('configuracion/personal/', views.configuracion_personal, name='configuracion-personal'),
+    path('configuracion/personal/<int:personal_id>/', views.configuracion_personal_detail, name='configuracion-personal-detail'),
+    path('dashboard/contexto/', views.dashboard_contexto, name='dashboard-contexto'),
 ]

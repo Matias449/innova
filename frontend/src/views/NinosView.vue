@@ -30,6 +30,7 @@
         <div class="card form-card" v-if="showForm">
           <h3>Registrar Nuevo Estudiante</h3>
           <form @submit.prevent="createNino" class="nino-form">
+            <div class="form-section-title full-width">Datos Personales</div>
             <div class="form-group">
               <label>Nombres</label>
               <input type="text" v-model="form.nombres" required />
@@ -55,9 +56,36 @@
               <input type="text" v-model="form.curso" required />
             </div>
             <div class="form-group full-width">
-              <label>Observaciones</label>
-              <textarea v-model="form.observaciones" rows="3"></textarea>
+              <label>Dirección del estudiante</label>
+              <input type="text" v-model="form.direccion" placeholder="Ej: Av. Las Flores 123, Maipú" />
             </div>
+            <div class="form-group full-width">
+              <label>Observaciones</label>
+              <textarea v-model="form.observaciones" rows="2"></textarea>
+            </div>
+
+            <div class="form-section-title full-width">Información Socioeconómica</div>
+            <div class="form-group">
+              <label>Quintil RSH <span class="label-hint">(Registro Social de Hogares)</span></label>
+              <select v-model="form.quintil_rsh">
+                <option :value="null">No informado</option>
+                <option v-for="q in [1,2,3,4,5]" :key="q" :value="q">Quintil {{ q }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>N.° de hermanos</label>
+              <input type="number" v-model.number="form.numero_hermanos" min="0" max="20" placeholder="0" />
+            </div>
+            <div class="form-group">
+              <label>Situación laboral de los padres</label>
+              <select v-model="form.situacion_laboral_padres">
+                <option value="">No informado</option>
+                <option value="ninguno">Ninguno con trabajo full time</option>
+                <option value="uno">Un apoderado con trabajo full time</option>
+                <option value="ambos">Ambos con trabajo full time</option>
+              </select>
+            </div>
+
             <div class="form-actions full-width">
               <button type="submit" class="btn-primary" style="width: auto;">
                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -148,7 +176,11 @@ const form = ref({
   apoderado_principal: '',
   fecha_nacimiento: '',
   curso: '',
-  observaciones: ''
+  observaciones: '',
+  direccion: '',
+  quintil_rsh: null,
+  numero_hermanos: null,
+  situacion_laboral_padres: ''
 })
 
 const availableCursos = computed(() => {
@@ -204,7 +236,8 @@ const createNino = async () => {
     if (response.ok) {
       form.value = {
         nombres: '', apellidos: '', rut: '', apoderado_principal: '',
-        fecha_nacimiento: '', curso: '', observaciones: ''
+        fecha_nacimiento: '', curso: '', observaciones: '',
+        direccion: '', quintil_rsh: null, numero_hermanos: null, situacion_laboral_padres: ''
       }
       showForm.value = false // Ocultar form al guardar
       await fetchNinos()
@@ -387,17 +420,45 @@ onMounted(() => {
   color: var(--text-color);
 }
 
+.label-hint {
+  font-weight: 400;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.form-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  margin-top: 0.25rem;
+}
+
+.nino-form .form-section-title:first-child {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
 .form-group input,
-.form-group textarea {
+.form-group textarea,
+.form-group select {
   padding: 0.75rem;
   border: 1px solid var(--border-color, #e0e0e0);
   border-radius: 8px;
   font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-main);
+  background: var(--bg-color);
   transition: border-color 0.3s ease;
 }
 
 .form-group input:focus,
-.form-group textarea:focus {
+.form-group textarea:focus,
+.form-group select:focus {
   outline: none;
   border-color: var(--primary-color);
 }
