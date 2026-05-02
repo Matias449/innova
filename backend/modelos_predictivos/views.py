@@ -156,6 +156,8 @@ def prediccion(request):
             'nombre': f'{nino.nombres} {nino.apellidos}',
             'curso': nino.curso,
             'quintil': nino.quintil_rsh,
+            'apoderado': nino.apoderado_principal,
+            'telefono': nino.telefono_apoderado,
             'tasa_actual': tasa_actual,
             'probabilidad': round(probabilidad, 3),
             'nivel': nivel,

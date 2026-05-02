@@ -423,7 +423,7 @@ const chartOptions = {
 }
 
 .data-table th {
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
   font-weight: 600;
   color: var(--text-muted);
 }

@@ -5,6 +5,7 @@ class Nino(models.Model):
     apellidos = models.CharField(max_length=100)
     rut = models.CharField(max_length=12, unique=True, help_text="Formato: 12.345.678-9")
     apoderado_principal = models.CharField(max_length=200)
+    telefono_apoderado = models.CharField(max_length=20, blank=True, null=True, help_text="Teléfono de contacto del apoderado")
     fecha_nacimiento = models.DateField()
     curso = models.CharField(max_length=50)
     observaciones = models.TextField(blank=True, null=True)

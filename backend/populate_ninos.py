@@ -112,8 +112,12 @@ def pick_quintil():
     return random.choices([1, 2, 3, 4, 5], weights=QUINTIL_WEIGHTS)[0]
 
 def pick_hermanos():
-    # 0-4 siblings, weighted towards 0-2
     return random.choices([0, 1, 2, 3, 4], weights=[0.20, 0.35, 0.28, 0.12, 0.05])[0]
+
+def generate_phone():
+    # Chilean mobile: +56 9 XXXX XXXX (8-digit suffix starting with 6-9)
+    suffix = random.randint(60000000, 99999999)
+    return f"+56 9 {str(suffix)[:4]} {str(suffix)[4:]}"
 
 def populate():
     Nino.objects.all().delete()
@@ -148,6 +152,7 @@ def populate():
                 apellidos=apellidos,
                 rut=rut,
                 apoderado_principal=apoderado,
+                telefono_apoderado=generate_phone(),
                 fecha_nacimiento=fecha_nac,
                 curso=curso,
                 observaciones=observaciones,

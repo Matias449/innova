@@ -61,6 +61,7 @@ def nino_detail(request, nino_id):
             'apellidos': nino.apellidos,
             'rut': nino.rut,
             'apoderado_principal': nino.apoderado_principal,
+            'telefono_apoderado': nino.telefono_apoderado,
             'fecha_nacimiento': nino.fecha_nacimiento.isoformat() if nino.fecha_nacimiento else None,
             'curso': nino.curso,
             'observaciones': nino.observaciones,
@@ -320,15 +321,20 @@ def asistencia_por_curso(request):
 @csrf_exempt
 def finanzas_dashboard(request):
     if request.method == 'GET':
-        # Datos simulados de Enero a Agosto (CLP)
+        # Datos simulados Ene–Ago para jardín ~90 niños, 9 funcionarios (CLP)
+        # Ene/Feb = verano (operación reducida); Mar = matrículas anuales + mensualidades; Abr–Ago = operación normal
         meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"]
-        
-        matriculas = [500000, 1500000, 12000000, 1500000, 500000, 200000, 100000, 250000]
-        subsidios = [8000000, 8000000, 8500000, 8500000, 8500000, 8500000, 8500000, 8500000]
-        
-        sueldos = [6500000, 6500000, 7000000, 7000000, 7000000, 7000000, 7000000, 7000000]
-        insumos = [500000, 800000, 2500000, 1200000, 1000000, 1500000, 1100000, 900000]
-        imprevistos = [0, 0, 150000, 0, 800000, 0, 4500000, 0] # Ej: Julio hubo rotura de cañería
+
+        # Mensualidades + matrícula anual en Marzo ($120.000 x 90 niños)
+        matriculas    = [2_100_000, 2_350_000, 15_240_000, 6_030_000, 5_940_000, 5_760_000, 5_620_000, 5_880_000]
+        # Subsidio JUNJI: varía con asistencia; menor en verano por días hábiles reducidos
+        subsidios     = [4_050_000, 4_620_000, 12_870_000, 13_230_000, 12_960_000, 12_390_000, 11_550_000, 12_780_000]
+        # Remuneraciones: 1 directora, 4 educadoras, 2 técnicas, 1 administrativa, 1 auxiliar
+        sueldos       = [10_350_000, 10_350_000, 11_100_000, 10_650_000, 10_650_000, 10_650_000, 10_650_000, 10_650_000]
+        # Insumos: alimentación (~$2M/mes normal) + materiales + servicios básicos
+        insumos       = [1_180_000, 1_090_000, 3_450_000, 2_620_000, 2_480_000, 2_710_000, 2_230_000, 2_590_000]
+        # Imprevistos: mantención calefacción en invierno, reparaciones
+        imprevistos   = [0, 0, 0, 0, 390_000, 0, 1_980_000, 0]
         
         datos = []
         for i in range(len(meses)):
@@ -523,11 +529,14 @@ def dashboard_contexto(request):
             semana_epidemiologica=last_se["max_se"],
             anio=last_se["max_anio"],
         )
+        total_rm = 0
         for r in registros:
-            if r.region == "Metropolitana":
-                region_rm = {"region": r.region, "tipo_virus": r.tipo_virus, "casos": r.casos_confirmados}
-            if r.region == "Nacional":
+            if r.region == "Región Metropolitana":
+                total_rm += r.casos_confirmados
                 virus_nacional.append({"virus": r.tipo_virus, "casos": r.casos_confirmados})
+
+        if total_rm > 0:
+            region_rm = {"region": "Región Metropolitana", "casos": total_rm}
 
         se_data = {
             "semana_epidemiologica": last_se["max_se"],
