@@ -178,7 +178,7 @@ onMounted(() => {
 }
 
 .bg-gray {
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
 }
 .p-3 { padding: 1.25rem; }
 .mt-2 { margin-top: 1rem; }

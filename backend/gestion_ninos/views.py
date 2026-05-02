@@ -1,12 +1,13 @@
 import json
+import requests as http_requests
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Max
 from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
 from django.utils import timezone
 import openpyxl
-from .models import Nino, AnotacionDesarrollo, RegistroAsistencia, PlanificacionCurso
+from .models import Nino, AnotacionDesarrollo, RegistroAsistencia, PlanificacionCurso, PerfilInstitucional, PersonalInstitucional, RegistroMeteorologico, RegistroCasosRespiratorios
 
 @csrf_exempt
 def ninos_list_create(request):
@@ -36,7 +37,11 @@ def ninos_list_create(request):
                 apoderado_principal=data.get('apoderado_principal'),
                 fecha_nacimiento=data.get('fecha_nacimiento'),
                 curso=data.get('curso'),
-                observaciones=data.get('observaciones', '')
+                observaciones=data.get('observaciones', ''),
+                quintil_rsh=data.get('quintil_rsh') or None,
+                direccion=data.get('direccion', ''),
+                numero_hermanos=data.get('numero_hermanos') if data.get('numero_hermanos') is not None else None,
+                situacion_laboral_padres=data.get('situacion_laboral_padres', ''),
             )
             return JsonResponse({'id': nuevo_nino.id, 'mensaje': 'Niño creado exitosamente'}, status=201)
         except Exception as e:
@@ -56,12 +61,17 @@ def nino_detail(request, nino_id):
             'apellidos': nino.apellidos,
             'rut': nino.rut,
             'apoderado_principal': nino.apoderado_principal,
+            'telefono_apoderado': nino.telefono_apoderado,
             'fecha_nacimiento': nino.fecha_nacimiento.isoformat() if nino.fecha_nacimiento else None,
             'curso': nino.curso,
             'observaciones': nino.observaciones,
             'enfermedades': nino.enfermedades,
             'alergias': nino.alergias,
             'situacion_familiar': nino.situacion_familiar,
+            'quintil_rsh': nino.quintil_rsh,
+            'direccion': nino.direccion,
+            'numero_hermanos': nino.numero_hermanos,
+            'situacion_laboral_padres': nino.situacion_laboral_padres,
             'anotaciones': anotaciones,
             'asistencias': asistencias
         }
@@ -311,15 +321,20 @@ def asistencia_por_curso(request):
 @csrf_exempt
 def finanzas_dashboard(request):
     if request.method == 'GET':
-        # Datos simulados de Enero a Agosto (CLP)
+        # Datos simulados Ene–Ago para jardín ~90 niños, 9 funcionarios (CLP)
+        # Ene/Feb = verano (operación reducida); Mar = matrículas anuales + mensualidades; Abr–Ago = operación normal
         meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago"]
-        
-        matriculas = [500000, 1500000, 12000000, 1500000, 500000, 200000, 100000, 250000]
-        subsidios = [8000000, 8000000, 8500000, 8500000, 8500000, 8500000, 8500000, 8500000]
-        
-        sueldos = [6500000, 6500000, 7000000, 7000000, 7000000, 7000000, 7000000, 7000000]
-        insumos = [500000, 800000, 2500000, 1200000, 1000000, 1500000, 1100000, 900000]
-        imprevistos = [0, 0, 150000, 0, 800000, 0, 4500000, 0] # Ej: Julio hubo rotura de cañería
+
+        # Mensualidades + matrícula anual en Marzo ($120.000 x 90 niños)
+        matriculas    = [2_100_000, 2_350_000, 15_240_000, 6_030_000, 5_940_000, 5_760_000, 5_620_000, 5_880_000]
+        # Subsidio JUNJI: varía con asistencia; menor en verano por días hábiles reducidos
+        subsidios     = [4_050_000, 4_620_000, 12_870_000, 13_230_000, 12_960_000, 12_390_000, 11_550_000, 12_780_000]
+        # Remuneraciones: 1 directora, 4 educadoras, 2 técnicas, 1 administrativa, 1 auxiliar
+        sueldos       = [10_350_000, 10_350_000, 11_100_000, 10_650_000, 10_650_000, 10_650_000, 10_650_000, 10_650_000]
+        # Insumos: alimentación (~$2M/mes normal) + materiales + servicios básicos
+        insumos       = [1_180_000, 1_090_000, 3_450_000, 2_620_000, 2_480_000, 2_710_000, 2_230_000, 2_590_000]
+        # Imprevistos: mantención calefacción en invierno, reparaciones
+        imprevistos   = [0, 0, 0, 0, 390_000, 0, 1_980_000, 0]
         
         datos = []
         for i in range(len(meses)):
@@ -340,3 +355,194 @@ def finanzas_dashboard(request):
             })
             
         return JsonResponse(datos, safe=False)
+
+
+# ── Configuración: Perfil Institucional ──────────────────────────────────────
+
+def _perfil_to_dict(p):
+    return {
+        'id': p.id,
+        'nombre': p.nombre,
+        'direccion': p.direccion,
+        'comuna': p.comuna,
+        'region': p.region,
+        'lat': p.lat,
+        'lng': p.lng,
+        'telefono': p.telefono,
+        'email': p.email,
+    }
+
+@csrf_exempt
+def configuracion_perfil(request):
+    perfil, _ = PerfilInstitucional.objects.get_or_create(pk=1)
+
+    if request.method == 'GET':
+        return JsonResponse(_perfil_to_dict(perfil))
+
+    elif request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            for field in ('nombre', 'direccion', 'comuna', 'region', 'telefono', 'email'):
+                if field in data:
+                    setattr(perfil, field, data[field])
+            if 'lat' in data:
+                perfil.lat = float(data['lat'])
+            if 'lng' in data:
+                perfil.lng = float(data['lng'])
+            perfil.save()
+            return JsonResponse(_perfil_to_dict(perfil))
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+
+# ── Configuración: Personal Institucional ────────────────────────────────────
+
+def _personal_to_dict(p):
+    return {
+        'id': p.id,
+        'nombre': p.nombre,
+        'cargo': p.cargo,
+        'email': p.email,
+        'telefono': p.telefono,
+        'fecha_ingreso': p.fecha_ingreso.isoformat() if p.fecha_ingreso else None,
+    }
+
+@csrf_exempt
+def configuracion_personal(request):
+    if request.method == 'GET':
+        personal = PersonalInstitucional.objects.all()
+        return JsonResponse([_personal_to_dict(p) for p in personal], safe=False)
+
+    elif request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            miembro = PersonalInstitucional.objects.create(
+                nombre=data.get('nombre', ''),
+                cargo=data.get('cargo', ''),
+                email=data.get('email') or None,
+                telefono=data.get('telefono') or None,
+                fecha_ingreso=data.get('fecha_ingreso') or None,
+            )
+            return JsonResponse(_personal_to_dict(miembro), status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+def configuracion_personal_detail(request, personal_id):
+    try:
+        miembro = PersonalInstitucional.objects.get(pk=personal_id)
+    except PersonalInstitucional.DoesNotExist:
+        return JsonResponse({'error': 'No encontrado'}, status=404)
+
+    if request.method == 'DELETE':
+        miembro.delete()
+        return JsonResponse({'mensaje': 'Eliminado correctamente'})
+
+    elif request.method == 'PUT':
+        try:
+            data = json.loads(request.body)
+            for field in ('nombre', 'cargo', 'email', 'telefono', 'fecha_ingreso'):
+                if field in data:
+                    setattr(miembro, field, data[field] or None)
+            miembro.save()
+            return JsonResponse(_personal_to_dict(miembro))
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+
+# ── Dashboard: Contexto Epidemiológico y Climático ───────────────────────────
+
+DIAS_ES = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+
+def _wmo_label(code):
+    if code is None:
+        return "Sin datos"
+    if code == 0:
+        return "Despejado"
+    if code in (1, 2):
+        return "Parcial"
+    if code == 3:
+        return "Nublado"
+    if code in (45, 48):
+        return "Niebla"
+    if 51 <= code <= 67:
+        return "Lluvia"
+    if 71 <= code <= 77:
+        return "Nieve"
+    if 80 <= code <= 82:
+        return "Chubascos"
+    if 95 <= code <= 99:
+        return "Tormenta"
+    return "Variable"
+
+@csrf_exempt
+def dashboard_contexto(request):
+    """Returns 7-day weather forecast + latest epidemiological week disease summary."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    perfil, _ = PerfilInstitucional.objects.get_or_create(pk=1)
+    pronostico = []
+
+    try:
+        resp = http_requests.get(
+            "https://api.open-meteo.com/v1/forecast",
+            params={
+                "latitude": perfil.lat,
+                "longitude": perfil.lng,
+                "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,weather_code",
+                "forecast_days": 7,
+                "timezone": "America/Santiago",
+            },
+            timeout=8,
+        )
+        if resp.ok:
+            d = resp.json().get("daily", {})
+            dates = d.get("time", [])
+            for i, fecha_str in enumerate(dates):
+                from datetime import date as dt_date
+                fecha = dt_date.fromisoformat(fecha_str)
+                code = d["weather_code"][i] if i < len(d.get("weather_code", [])) else None
+                pronostico.append({
+                    "fecha": fecha_str,
+                    "dia": DIAS_ES[fecha.weekday()],
+                    "temp_max": d["temperature_2m_max"][i] if i < len(d.get("temperature_2m_max", [])) else None,
+                    "temp_min": d["temperature_2m_min"][i] if i < len(d.get("temperature_2m_min", [])) else None,
+                    "precipitacion": d["precipitation_sum"][i] if i < len(d.get("precipitation_sum", [])) else None,
+                    "prob_lluvia": d["precipitation_probability_max"][i] if i < len(d.get("precipitation_probability_max", [])) else None,
+                    "codigo_clima": code,
+                    "descripcion": _wmo_label(code),
+                })
+    except Exception:
+        pass
+
+    last_se = RegistroCasosRespiratorios.objects.aggregate(
+        max_se=Max("semana_epidemiologica"),
+        max_anio=Max("anio"),
+    )
+    se_data = {}
+    region_rm = None
+    virus_nacional = []
+
+    if last_se["max_se"]:
+        registros = RegistroCasosRespiratorios.objects.filter(
+            semana_epidemiologica=last_se["max_se"],
+            anio=last_se["max_anio"],
+        )
+        total_rm = 0
+        for r in registros:
+            if r.region == "Región Metropolitana":
+                total_rm += r.casos_confirmados
+                virus_nacional.append({"virus": r.tipo_virus, "casos": r.casos_confirmados})
+
+        if total_rm > 0:
+            region_rm = {"region": "Región Metropolitana", "casos": total_rm}
+
+        se_data = {
+            "semana_epidemiologica": last_se["max_se"],
+            "anio": last_se["max_anio"],
+            "region_metropolitana": region_rm,
+            "nacionales_por_virus": sorted(virus_nacional, key=lambda x: x["casos"], reverse=True),
+        }
+
+    return JsonResponse({"pronostico": pronostico, "enfermedades": se_data})

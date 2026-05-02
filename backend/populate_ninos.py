@@ -11,7 +11,6 @@ from gestion_ninos.models import Nino
 NOMBRES_NINOS = ["Agustín", "Mateo", "Tomás", "Lucas", "Benjamín", "Vicente", "Maximiliano", "Joaquín", "Martín", "Facundo", "Diego", "Santiago", "Gaspar", "Emilio", "Julián"]
 NOMBRES_NINAS = ["Isabella", "Sofía", "Emilia", "Josefa", "Florencia", "Agustina", "Martina", "Trinidad", "Amanda", "Julieta", "Maite", "Antonella", "Ignacia", "Isidora", "Catalina"]
 APELLIDOS = ["González", "Muñoz", "Rojas", "Díaz", "Pérez", "Soto", "Contreras", "Silva", "Martínez", "Sepúlveda", "Morales", "Rodríguez", "López", "Fuentes", "Hernández", "Torres", "Araya", "Flores", "Espinoza", "Valenzuela", "Castillo", "Tapia", "Reyes", "Gutiérrez", "Castro", "Pizarro", "Álvarez", "Vásquez", "Sánchez", "Fernández", "Ramírez", "Carrasco", "Gómez", "Cortés", "Herrera", "Núñez", "Jara", "Vergara", "Rivera", "Figueroa", "Riquelme", "García", "Miranda", "Bravo", "Vera", "Molina", "Vega", "Campos", "Sandoval", "Orellana"]
-
 APODERADOS_NOMBRES = ["Carlos", "María", "José", "Juan", "Luis", "Ana", "Pedro", "Jorge", "Margarita", "Rosa", "Daniel", "Claudia", "Patricia", "Andrea", "Carolina", "Francisco", "Víctor", "Manuel", "Camila", "Paulina"]
 
 CURSOS = {
@@ -19,6 +18,68 @@ CURSOS = {
     "Medio Menor B": {"min_age_days": 2*365, "max_age_days": 3*365},
     "Medio Mayor A": {"min_age_days": 3*365, "max_age_days": 4*365},
     "Medio Mayor B": {"min_age_days": 3*365, "max_age_days": 4*365},
+}
+
+# Addresses by quintil — lower quintiles tend to be peripheral communes
+ADDRESSES_BY_QUINTIL = {
+    1: [
+        "Av. La Pintana 2340, La Pintana",
+        "Pasaje Los Cóndores 145, Lo Espejo",
+        "Calle El Manzano 88, Cerro Navia",
+        "Av. Américo Vespucio 3210, El Bosque",
+        "Pasaje Los Pinos 321, Pudahuel",
+        "Calle Frontera 678, La Pintana",
+        "Av. Pedro Aguirre Cerda 1102, Lo Espejo",
+    ],
+    2: [
+        "Av. Vicuña Mackenna 4560, La Granja",
+        "Calle Las Rosas 234, Renca",
+        "Pasaje El Arrayán 77, Quilicura",
+        "Av. Américo Vespucio 1890, Pudahuel",
+        "Calle Los Aromos 456, San Bernardo",
+        "Av. General Velásquez 3300, San Bernardo",
+        "Calle Tarapacá 892, Renca",
+    ],
+    3: [
+        "Av. Pajaritos 2100, Maipú",
+        "Calle Los Quillayes 340, La Florida",
+        "Av. Américo Vespucio 780, Maipú",
+        "Calle Magnolias 123, Ñuñoa",
+        "Av. Departamental 2760, La Florida",
+        "Calle Los Cerezos 445, Peñalolén",
+        "Av. José Arrieta 8800, Peñalolén",
+    ],
+    4: [
+        "Av. Irarrázaval 2300, Ñuñoa",
+        "Calle Santa Isabel 1234, Santiago Centro",
+        "Av. Matta 890, San Miguel",
+        "Calle Los Leones 560, Providencia",
+        "Av. Macul 3100, Macul",
+        "Calle Bilbao 1450, Providencia",
+        "Av. Francisco Bilbao 2100, San Miguel",
+    ],
+    5: [
+        "Av. El Bosque Norte 500, Las Condes",
+        "Calle Isidora Goyenechea 3400, Las Condes",
+        "Av. Vitacura 5200, Vitacura",
+        "Calle El Golf 99, Las Condes",
+        "Av. Alonso de Córdova 2800, Vitacura",
+        "Calle Colón 5432, Las Condes",
+    ],
+}
+
+# RSH quintil distribution for a JUNJI public preschool (low-income skewed)
+QUINTIL_WEIGHTS = [0.30, 0.28, 0.22, 0.13, 0.07]  # Q1 most likely
+
+# Situacion laboral weights: none/one/both full-time
+LABORAL_OPTIONS = ['ninguno', 'uno', 'ambos']
+# Lower quintiles less likely to have both parents employed full-time
+LABORAL_WEIGHTS_BY_QUINTIL = {
+    1: [0.35, 0.45, 0.20],
+    2: [0.25, 0.48, 0.27],
+    3: [0.18, 0.47, 0.35],
+    4: [0.10, 0.42, 0.48],
+    5: [0.05, 0.32, 0.63],
 }
 
 def dv(rut):
@@ -42,14 +103,23 @@ generated_ruts = set()
 
 def generate_rut():
     while True:
-        # Generar un rut razonable para un niño (nacido en ~2022-2024, el rut es aprox 26.xxx.xxx)
         rut_num = random.randint(26000000, 27500000)
         if rut_num not in generated_ruts:
             generated_ruts.add(rut_num)
             return format_rut(rut_num)
 
+def pick_quintil():
+    return random.choices([1, 2, 3, 4, 5], weights=QUINTIL_WEIGHTS)[0]
+
+def pick_hermanos():
+    return random.choices([0, 1, 2, 3, 4], weights=[0.20, 0.35, 0.28, 0.12, 0.05])[0]
+
+def generate_phone():
+    # Chilean mobile: +56 9 XXXX XXXX (8-digit suffix starting with 6-9)
+    suffix = random.randint(60000000, 99999999)
+    return f"+56 9 {str(suffix)[:4]} {str(suffix)[4:]}"
+
 def populate():
-    # Limpiamos los existentes para evitar mezclar y repetir
     Nino.objects.all().delete()
     print("Base de datos limpiada. Generando registros...")
 
@@ -62,14 +132,18 @@ def populate():
             nombres = random.choice(NOMBRES_NINOS) if is_boy else random.choice(NOMBRES_NINAS)
             apellidos = f"{random.choice(APELLIDOS)} {random.choice(APELLIDOS)}"
             rut = generate_rut()
-            
             apoderado = f"{random.choice(APODERADOS_NOMBRES)} {apellidos.split(' ')[0]}"
-            
             age_days = random.randint(age_range['min_age_days'], age_range['max_age_days'])
             fecha_nac = today - timedelta(days=age_days)
-            
+
+            quintil = pick_quintil()
+            direccion = random.choice(ADDRESSES_BY_QUINTIL[quintil])
+            numero_hermanos = pick_hermanos()
+            laboral_weights = LABORAL_WEIGHTS_BY_QUINTIL[quintil]
+            situacion_laboral = random.choices(LABORAL_OPTIONS, weights=laboral_weights)[0]
+
             observaciones = random.choice([
-                "", "", "", "Alergia al maní.", "Intolerancia a la lactosa.", 
+                "", "", "", "Alergia al maní.", "Intolerancia a la lactosa.",
                 "Requiere supervisión al comer.", "Muy participativo.", "En periodo de adaptación."
             ])
 
@@ -78,13 +152,18 @@ def populate():
                 apellidos=apellidos,
                 rut=rut,
                 apoderado_principal=apoderado,
+                telefono_apoderado=generate_phone(),
                 fecha_nacimiento=fecha_nac,
                 curso=curso,
-                observaciones=observaciones
+                observaciones=observaciones,
+                quintil_rsh=quintil,
+                direccion=direccion,
+                numero_hermanos=numero_hermanos,
+                situacion_laboral_padres=situacion_laboral,
             )
         print(f"Curso {curso} generado con {num_students} niños.")
 
-    print(f"¡Proceso completado! Total de niños registrados: {Nino.objects.count()}")
+    print(f"Proceso completado. Total: {Nino.objects.count()} niños registrados.")
 
 if __name__ == '__main__':
     populate()

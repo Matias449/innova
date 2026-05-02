@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'corsheaders',
     'gestion_ninos',
+    'modelos_predictivos',
 ]
 
 MIDDLEWARE = [

@@ -539,7 +539,7 @@ const guardarAnotacion = async () => {
 .search-box {
   padding: 0.75rem;
   border-bottom: 1px solid var(--border-color);
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
 }
 
 .dropdown-search {
@@ -656,7 +656,7 @@ const guardarAnotacion = async () => {
   padding: 1rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
   resize: vertical;
   font-family: inherit;
   font-size: 0.95rem;
@@ -767,7 +767,7 @@ const guardarAnotacion = async () => {
 .asistencia-summary {
   text-align: center;
   padding: 1rem;
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
   border-radius: var(--radius-md);
 }
 
@@ -895,7 +895,7 @@ const guardarAnotacion = async () => {
 }
 
 .data-table th {
-  background-color: #f8fafc;
+  background-color: var(--bg-color);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -927,7 +927,7 @@ const guardarAnotacion = async () => {
   padding: 2rem;
   color: var(--text-muted);
   font-style: italic;
-  background: #f8fafc;
+  background: var(--bg-color);
   border-radius: var(--radius-md);
 }
 
@@ -944,7 +944,7 @@ const guardarAnotacion = async () => {
   padding: 0.75rem 1rem;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
-  background: #f8fafc;
+  background: var(--bg-color);
   transition: box-shadow 0.15s;
 }
 
