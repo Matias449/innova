@@ -90,6 +90,36 @@
           </div>
         </div>
 
+        <!-- SECCIÓN 3.5: EVALUACIÓN DEL DÍA -->
+        <div class="card panel-card full-width">
+          <div class="panel-header">
+            <h3>Evaluación de Actividad Diaria</h3>
+            <span class="fecha-hoy">{{ fechaHoyStr }}</span>
+          </div>
+          <p class="text-muted mb-3" style="text-align: center;">Evalúa la participación de cada niño en la actividad planificada de hoy.</p>
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <button class="btn-action w-100" @click="iniciarEvaluacion" style="max-width: 300px;">Iniciar Evaluación</button>
+          </div>
+          <div v-if="evaluacionHoy.length === 0" class="lista-estado-vacio">
+            <p>No hay evaluaciones registradas para hoy.</p>
+          </div>
+          <div v-else class="lista-estudiantes-grid">
+            <div
+              v-for="reg in evaluacionHoy"
+              :key="reg.nino_id"
+              :class="['estudiante-chip', mapEvaluacionClass(reg.evaluacion)]"
+            >
+              <div class="chip-avatar">{{ reg.nombres.charAt(0) }}{{ reg.apellidos.charAt(0) }}</div>
+              <div class="chip-info">
+                <span class="chip-nombre">{{ reg.apellidos }}, {{ reg.nombres }}</span>
+                <span :class="['chip-badge', mapEvaluacionClass(reg.evaluacion)]">
+                  {{ reg.evaluacion }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- SECCIÓN 4: BITÁCORAS / ANOTACIONES -->
         <div class="card panel-card full-width">
           <div class="panel-header">
@@ -227,6 +257,91 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Evaluación Enfocada -->
+    <div v-if="evaluacionModalOpen" class="attendance-modal">
+      <div class="modal-content">
+        <button class="close-modal-btn" @click="cancelarEvaluacion">&times;</button>
+        
+        <div v-if="!evaluacionFinalizada" class="asistencia-flow">
+          <div class="modal-header">
+            <h3>Evaluación de Actividad</h3>
+            <p>{{ selectedCurso }} - {{ fechaHoyStr }}</p>
+          </div>
+          
+          <div class="progress-bar">
+            <div class="progress-fill" :style="{ width: progresoEvaluacion + '%' }"></div>
+          </div>
+          <p class="progress-text">Niño {{ currentEvalIndex + 1 }} de {{ estudiantes.length }}</p>
+          
+          <div class="estudiante-card">
+            <div class="avatar-placeholder big">{{ iniciales(estudianteEvalActual) }}</div>
+            <h2 class="estudiante-nombre">{{ estudianteEvalActual.nombres }}</h2>
+            <h3 class="estudiante-apellido">{{ estudianteEvalActual.apellidos }}</h3>
+          </div>
+
+          <div class="action-buttons eval-buttons">
+            <button class="btn-eval-apoyo" @click="registrarEval('Necesita apoyo')">Necesita apoyo</button>
+            <button class="btn-eval-proceso" @click="registrarEval('En proceso')">En proceso</button>
+            <button class="btn-eval-logrado" @click="registrarEval('Logrado')">Logrado</button>
+          </div>
+          
+          <button v-if="currentEvalIndex > 0" class="btn-back mt-4" @click="volverAtrasEval">
+            ← Deshacer y volver al alumno anterior
+          </button>
+        </div>
+
+        <div v-else class="asistencia-summary-modal">
+          <div class="modal-header">
+            <h3>Evaluación Completada</h3>
+            <p>Revisa el resumen antes de enviarlo oficialmente.</p>
+          </div>
+          
+          <div class="summary-grid">
+            <div class="summary-box logrado">
+              <span class="num">{{ countEvaluacion('Logrado') }}</span>
+              <span>Logrado</span>
+            </div>
+            <div class="summary-box proceso">
+              <span class="num">{{ countEvaluacion('En proceso') }}</span>
+              <span>En proceso</span>
+            </div>
+            <div class="summary-box apoyo">
+              <span class="num">{{ countEvaluacion('Necesita apoyo') }}</span>
+              <span>Necesita apoyo</span>
+            </div>
+          </div>
+
+          <div class="summary-detail-table">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Estudiante</th>
+                  <th>Evaluación</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="reg in registrosEvalTemporales" :key="reg.nino_id">
+                  <td>{{ reg.nombre }}</td>
+                  <td>
+                    <span :class="['badge', mapEvaluacionClass(reg.evaluacion)]">
+                      {{ reg.evaluacion }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="modal-actions mt-4">
+            <button class="btn-back" @click="volverAtrasDesdeResumenEval">← Corregir al último alumno</button>
+            <button class="btn-primary" @click="guardarEvaluacionEnBD" :disabled="savingEvaluacion">
+              {{ savingEvaluacion ? 'Guardando...' : 'Confirmar y Guardar Evaluación' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -282,6 +397,24 @@ const savingAnotacion = ref(false)
 const ninoSearch = ref('')
 const ninoDropdownOpen = ref(false)
 
+// Estado de Evaluación
+const evaluacionModalOpen = ref(false)
+const evaluacionFinalizada = ref(false)
+const currentEvalIndex = ref(0)
+const registrosEvalTemporales = ref([])
+const savingEvaluacion = ref(false)
+const evaluacionHoy = ref([])
+
+const fetchEvaluacionHoy = async () => {
+  if (!selectedCurso.value) return
+  try {
+    const res = await fetch(`${API_BASE_URL}/aula/evaluacion/dia/?curso=${encodeURIComponent(selectedCurso.value)}&fecha=${fechaHoyISO}`)
+    if (res.ok) evaluacionHoy.value = await res.json()
+  } catch (e) {
+    console.error('Error fetching evaluación del día:', e)
+  }
+}
+
 const filteredEstudiantes = computed(() => {
   if (!ninoSearch.value) return estudiantes.value
   const query = ninoSearch.value.toLowerCase()
@@ -335,6 +468,7 @@ const fetchData = async () => {
 
     fetchPlanificacion()
     fetchAsistenciaHoy()
+    fetchEvaluacionHoy()
   } catch (error) {
     console.error("Error fetching data:", error)
   }
@@ -435,6 +569,86 @@ const guardarAsistenciaEnBD = async () => {
     alert("Error al guardar asistencia.")
   } finally {
     savingAsistencia.value = false
+  }
+}
+
+// Lógica de Evaluación 1 a 1
+const estudianteEvalActual = computed(() => estudiantes.value[currentEvalIndex.value])
+const progresoEvaluacion = computed(() => (currentEvalIndex.value / estudiantes.value.length) * 100)
+
+const iniciarEvaluacion = () => {
+  if (estudiantes.value.length === 0) {
+    alert("No hay estudiantes en este curso.")
+    return
+  }
+  currentEvalIndex.value = 0
+  registrosEvalTemporales.value = []
+  evaluacionModalOpen.value = true
+  evaluacionFinalizada.value = false
+}
+
+const cancelarEvaluacion = () => {
+  if (confirm("¿Seguro que deseas cancelar? Se perderá el progreso de la evaluación actual.")) {
+    evaluacionModalOpen.value = false
+  }
+}
+
+const volverAtrasEval = () => {
+  if (currentEvalIndex.value > 0) {
+    registrosEvalTemporales.value.pop()
+    currentEvalIndex.value--
+  }
+}
+
+const volverAtrasDesdeResumenEval = () => {
+  evaluacionFinalizada.value = false
+  registrosEvalTemporales.value.pop()
+  currentEvalIndex.value = estudiantes.value.length - 1
+}
+
+const registrarEval = (estado) => {
+  registrosEvalTemporales.value.push({
+    nino_id: estudianteEvalActual.value.id,
+    nombre: `${estudianteEvalActual.value.apellidos}, ${estudianteEvalActual.value.nombres}`,
+    evaluacion: estado
+  })
+  
+  if (currentEvalIndex.value < estudiantes.value.length - 1) {
+    currentEvalIndex.value++
+  } else {
+    evaluacionFinalizada.value = true
+  }
+}
+
+const countEvaluacion = (estado) => registrosEvalTemporales.value.filter(r => r.evaluacion === estado).length
+
+const mapEvaluacionClass = (estado) => {
+  if (estado === 'Logrado') return 'logrado';
+  if (estado === 'En proceso') return 'proceso';
+  if (estado === 'Necesita apoyo') return 'apoyo';
+  return '';
+}
+
+const guardarEvaluacionEnBD = async () => {
+  savingEvaluacion.value = true
+  try {
+    const res = await fetch(`${API_BASE_URL}/aula/evaluacion/bulk/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fecha: fechaHoyISO,
+        registros: registrosEvalTemporales.value
+      })
+    })
+    if (res.ok) {
+      alert("¡Evaluación registrada oficialmente!")
+      evaluacionModalOpen.value = false
+      fetchEvaluacionHoy()
+    }
+  } catch (e) {
+    alert("Error al guardar evaluación.")
+  } finally {
+    savingEvaluacion.value = false
   }
 }
 
@@ -764,6 +978,27 @@ const guardarAnotacion = async () => {
 .btn-atraso:hover { background-color: #FDE047; }
 .btn-presente:hover { background-color: #86EFAC; }
 
+.btn-eval-apoyo, .btn-eval-proceso, .btn-eval-logrado {
+  padding: 1rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  flex: 1;
+  transition: transform 0.1s, opacity 0.2s;
+}
+
+.btn-eval-apoyo:active, .btn-eval-proceso:active, .btn-eval-logrado:active { transform: scale(0.95); }
+
+.btn-eval-apoyo { background-color: #FEE2E2; color: #991B1B; }
+.btn-eval-proceso { background-color: #FEF9C3; color: #854D0E; }
+.btn-eval-logrado { background-color: #DCFCE7; color: #166534; }
+
+.btn-eval-apoyo:hover { background-color: #FCA5A5; }
+.btn-eval-proceso:hover { background-color: #FDE047; }
+.btn-eval-logrado:hover { background-color: #86EFAC; }
+
 .asistencia-summary {
   text-align: center;
   padding: 1rem;
@@ -868,6 +1103,10 @@ const guardarAnotacion = async () => {
 .summary-box.ausente { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
 .summary-box.atraso { background: #FEF9C3; color: #854D0E; border: 1px solid #FEF08A; }
 
+.summary-box.logrado { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+.summary-box.apoyo { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+.summary-box.proceso { background: #FEF9C3; color: #854D0E; border: 1px solid #FEF08A; }
+
 .summary-box .num {
   font-size: 3rem;
   font-weight: 800;
@@ -914,6 +1153,10 @@ const guardarAnotacion = async () => {
 .badge.ausente { background: #FEE2E2; color: #991B1B; }
 .badge.atraso { background: #FEF9C3; color: #854D0E; }
 
+.badge.logrado { background: #DCFCE7; color: #166534; }
+.badge.apoyo { background: #FEE2E2; color: #991B1B; }
+.badge.proceso { background: #FEF9C3; color: #854D0E; }
+
 .modal-actions {
   display: flex;
   justify-content: space-between;
@@ -955,6 +1198,10 @@ const guardarAnotacion = async () => {
 .estudiante-chip.atraso { border-left: 4px solid #f59e0b; background: #fffbeb; }
 .estudiante-chip.justificado { border-left: 4px solid #6366f1; background: #eef2ff; }
 
+.estudiante-chip.logrado { border-left: 4px solid #22c55e; background: #f0fdf4; }
+.estudiante-chip.apoyo { border-left: 4px solid #ef4444; background: #fef2f2; }
+.estudiante-chip.proceso { border-left: 4px solid #f59e0b; background: #fffbeb; }
+
 .chip-avatar {
   width: 38px;
   height: 38px;
@@ -994,6 +1241,10 @@ const guardarAnotacion = async () => {
 .chip-badge.ausente { color: #991b1b; }
 .chip-badge.atraso { color: #92400e; }
 .chip-badge.justificado { color: #3730a3; }
+
+.chip-badge.logrado { color: #166534; }
+.chip-badge.apoyo { color: #991b1b; }
+.chip-badge.proceso { color: #92400e; }
 
 @media (max-width: 768px) {
   .aula-grid { grid-template-columns: 1fr; }

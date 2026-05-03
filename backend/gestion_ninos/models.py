@@ -74,6 +74,24 @@ class PlanificacionCurso(models.Model):
         return f"Planificación {self.curso} - {self.fecha}"
 
 
+class EvaluacionActividad(models.Model):
+    ESTADOS = [
+        ('Logrado', 'Logrado'),
+        ('En proceso', 'En proceso'),
+        ('Necesita apoyo', 'Necesita apoyo')
+    ]
+    nino = models.ForeignKey(Nino, on_delete=models.CASCADE, related_name='evaluaciones')
+    fecha = models.DateField()
+    evaluacion = models.CharField(max_length=20, choices=ESTADOS)
+
+    class Meta:
+        ordering = ['-fecha']
+        unique_together = ('nino', 'fecha')
+
+    def __str__(self):
+        return f"{self.nino.nombres} - {self.fecha}: {self.evaluacion}"
+
+
 class PerfilInstitucional(models.Model):
     nombre = models.CharField(max_length=200, default="Jardín Infantil INNOVA")
     direccion = models.CharField(max_length=300, default="Av. Ricardo Lyon 1345, Providencia")

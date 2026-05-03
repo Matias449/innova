@@ -7,7 +7,7 @@ from django.db.models import Count, Q, Max
 from django.db.models.functions import TruncMonth, TruncWeek, TruncDay
 from django.utils import timezone
 import openpyxl
-from .models import Nino, AnotacionDesarrollo, RegistroAsistencia, PlanificacionCurso, PerfilInstitucional, PersonalInstitucional, RegistroMeteorologico, RegistroCasosRespiratorios
+from .models import Nino, AnotacionDesarrollo, RegistroAsistencia, PlanificacionCurso, PerfilInstitucional, PersonalInstitucional, RegistroMeteorologico, RegistroCasosRespiratorios, EvaluacionActividad
 
 @csrf_exempt
 def ninos_list_create(request):
@@ -287,6 +287,54 @@ def aula_asistencia_dia(request):
                 'nombres': r.nino.nombres,
                 'apellidos': r.nino.apellidos,
                 'estado': r.estado
+            } for r in registros]
+            return JsonResponse(data, safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+def aula_evaluacion_bulk(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            fecha_str = data.get('fecha')
+            registros = data.get('registros', [])
+            
+            if not fecha_str or not registros:
+                return JsonResponse({'error': 'Faltan datos (fecha o registros)'}, status=400)
+                
+            fecha = timezone.datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            
+            nino_ids = [r['nino_id'] for r in registros]
+            EvaluacionActividad.objects.filter(fecha=fecha, nino_id__in=nino_ids).delete()
+            
+            nuevos_registros = [
+                EvaluacionActividad(nino_id=r['nino_id'], fecha=fecha, evaluacion=r['evaluacion'])
+                for r in registros
+            ]
+            EvaluacionActividad.objects.bulk_create(nuevos_registros)
+            
+            return JsonResponse({'mensaje': 'Evaluaciones guardadas correctamente'})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+@csrf_exempt
+def aula_evaluacion_dia(request):
+    if request.method == 'GET':
+        curso = request.GET.get('curso')
+        fecha_str = request.GET.get('fecha')
+        if not curso or not fecha_str:
+            return JsonResponse({'error': 'Faltan parámetros curso o fecha'}, status=400)
+        try:
+            fecha = timezone.datetime.strptime(fecha_str, '%Y-%m-%d').date()
+            registros = EvaluacionActividad.objects.filter(
+                nino__curso=curso, fecha=fecha
+            ).select_related('nino').order_by('nino__apellidos', 'nino__nombres')
+            data = [{
+                'nino_id': r.nino.id,
+                'nombres': r.nino.nombres,
+                'apellidos': r.nino.apellidos,
+                'evaluacion': r.evaluacion
             } for r in registros]
             return JsonResponse(data, safe=False)
         except Exception as e:
