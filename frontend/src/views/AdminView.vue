@@ -154,6 +154,7 @@ import * as XLSX from 'xlsx'
 import { useAuth } from '../composables/useAuth'
 
 const { currentUser } = useAuth()
+const API_BASE_URL = 'http://localhost:8000/api'
 const fileInput = ref(null)
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -250,18 +251,34 @@ function onFile(e) {
   if (file) { nuevo.value.archivo = file; nuevo.value.archivoNombre = file.name }
 }
 
-function registrarRendicion() {
-  if (!formValido.value) return
-  rendicionDocs.value.unshift({
-    nombre:        nuevo.value.nombre.trim(),
-    tipo:          nuevo.value.tipo,
-    archivoNombre: nuevo.value.archivoNombre,
-    fecha:         new Date().toLocaleDateString('es-CL'),
-    mes:           mesActualKey,
-  })
-  persist()
-  nuevo.value = { nombre: '', tipo: '', archivoNombre: '', archivo: null }
-  if (fileInput.value) fileInput.value.value = ''
+async function registrarRendicion() {
+  if (!formValido.value || !nuevo.value.archivo) return
+  
+  const formData = new FormData()
+  formData.append('archivo', nuevo.value.archivo)
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/rendicion/upload/`, {
+      method: 'POST',
+      body: formData
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error || 'Error subiendo archivo')
+
+    rendicionDocs.value.unshift({
+      nombre:        nuevo.value.nombre.trim(),
+      tipo:          nuevo.value.tipo,
+      archivoNombre: nuevo.value.archivoNombre,
+      rutaServidor:  data.ruta,
+      fecha:         new Date().toLocaleDateString('es-CL'),
+      mes:           mesActualKey,
+    })
+    persist()
+    nuevo.value = { nombre: '', tipo: '', archivoNombre: '', archivo: null }
+    if (fileInput.value) fileInput.value.value = ''
+  } catch (error) {
+    alert('Error al registrar rendición: ' + error.message)
+  }
 }
 
 // ── Estado de rendición ───────────────────────────────────────────────────────
@@ -291,17 +308,98 @@ function eliminarRepo(i) {
   localStorage.setItem('repositorio_docs', JSON.stringify(repositorioDocs.value))
 }
 
-// ── Exportar a JUNJI (Excel vacío con headers) ────────────────────────────────
-function exportarJunji(rendicion) {
+// ── Exportar a JUNJI (Excel con documentos) ────────────────────────────────
+async function exportarJunji(rendicion) {
+  if (!rendicion.docs || rendicion.docs.length === 0) {
+    alert('No hay documentos registrados para esta rendición.')
+    return
+  }
+
+  // Recopilar rutas de los archivos subidos al servidor
+  const rutas = rendicion.docs.map(doc => doc.rutaServidor).filter(Boolean)
+  
+  let resultadosGemini = []
+  
+  if (rutas.length > 0) {
+    // Aquí mostramos al usuario que estamos analizando
+    // (En una app real se usaría un componente de loading/toast)
+    const btn = document.activeElement
+    const originalText = btn ? btn.innerHTML : ''
+    if (btn && btn.classList.contains('btn-exportar')) {
+      btn.innerHTML = `<svg class="animate-spin" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="10"/></svg> Analizando con IA...`
+      btn.disabled = true
+    }
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/rendicion/analizar-batch/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rutas })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        resultadosGemini = data.resultados || []
+      }
+    } catch (e) {
+      console.error("Error al conectar con Gemini:", e)
+      alert("Error al analizar con IA. Se usarán valores 0.")
+    } finally {
+      if (btn && btn.classList.contains('btn-exportar')) {
+        btn.innerHTML = originalText
+        btn.disabled = false
+      }
+    }
+  }
+
   const wb = XLSX.utils.book_new()
-  const headers = [
-    ['N°', 'Tipo de Documento', 'Nombre', 'Archivo Adjunto', 'Fecha de Registro', 'Observaciones'],
+  const data = [
+    ['N°', 'Tipo de Documento', 'Nombre', 'Archivo Adjunto', 'Fecha de Registro', 'Monto ($)', 'Observaciones'],
   ]
-  const ws = XLSX.utils.aoa_to_sheet(headers)
+
+  let totalMonto = 0;
+
+  for (let index = 0; index < rendicion.docs.length; index++) {
+    const doc = rendicion.docs[index];
+    let montoReal = 0;
+    let obsGemini = '';
+
+    // Si tenemos resultados de Gemini y coincide el índice
+    if (resultadosGemini[index]) {
+      montoReal = resultadosGemini[index].monto || 0;
+      obsGemini = resultadosGemini[index].observaciones || '';
+    }
+
+    // Si Gemini devuelve 0 o no pudo extraer, le pedimos al usuario
+    if (montoReal === 0 && doc.rutaServidor) {
+      const manualMonto = prompt(`Gemini no pudo extraer el monto para "${doc.nombre}". Por favor, ingrese el monto manualmente:`, "0");
+      if (manualMonto !== null && !isNaN(parseInt(manualMonto))) {
+        montoReal = parseInt(manualMonto);
+      }
+    }
+
+    totalMonto += montoReal;
+
+    data.push([
+      index + 1,
+      tiposMap[doc.tipo] || doc.tipo,
+      doc.nombre,
+      doc.archivoNombre || '',
+      doc.fecha,
+      montoReal,
+      obsGemini
+    ])
+  }
+
+  // Fila final con el total
+  data.push([
+    '', '', '', '', 'TOTAL:', totalMonto, ''
+  ])
+
+  const ws = XLSX.utils.aoa_to_sheet(data)
 
   // Anchos de columna
   ws['!cols'] = [
-    { wch: 5 }, { wch: 32 }, { wch: 36 }, { wch: 30 }, { wch: 18 }, { wch: 24 },
+    { wch: 5 }, { wch: 32 }, { wch: 36 }, { wch: 30 }, { wch: 18 }, { wch: 15 }, { wch: 50 },
   ]
 
   XLSX.utils.book_append_sheet(wb, ws, `Rendición ${rendicion.label}`)
