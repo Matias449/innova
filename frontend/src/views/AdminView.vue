@@ -363,6 +363,19 @@ async function exportarJunji(rendicion) {
     let montoReal = 0;
     let obsGemini = '';
 
+    /*
+    // --- OPCIÓN ANTERIOR (COMENTADA): Generar monto artificial pseudo-aleatorio pero estable ---
+    // (Útil para pruebas rápidas sin consumir la API de Gemini)
+    let hash = 0;
+    const str = (doc.nombre || '') + (doc.tipo || '');
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const montoFicticio = (Math.abs(hash) % 850000) + 15000;
+    montoReal = montoFicticio;
+    obsGemini = 'Monto simulado';
+    */
+
     // Si tenemos resultados de Gemini y coincide el índice
     if (resultadosGemini[index]) {
       montoReal = resultadosGemini[index].monto || 0;
