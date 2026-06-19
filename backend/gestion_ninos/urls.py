@@ -19,4 +19,6 @@ urlpatterns = [
     path('configuracion/personal/', views.configuracion_personal, name='configuracion-personal'),
     path('configuracion/personal/<int:personal_id>/', views.configuracion_personal_detail, name='configuracion-personal-detail'),
     path('dashboard/contexto/', views.dashboard_contexto, name='dashboard-contexto'),
+    path('rendicion/upload/', views.rendicion_upload, name='rendicion-upload'),
+    path('rendicion/analizar-batch/', views.rendicion_analizar_batch, name='rendicion-analizar-batch'),
 ]

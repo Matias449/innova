@@ -594,3 +594,43 @@ def dashboard_contexto(request):
         }
 
     return JsonResponse({"pronostico": pronostico, "enfermedades": se_data})
+
+# ── Rendición JUNJI con Gemini ───────────────────────────────────────────────
+import os
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
+from core.gemini_service import analizar_documento_rendicion
+
+@csrf_exempt
+def rendicion_upload(request):
+    if request.method == 'POST' and request.FILES.get('archivo'):
+        archivo = request.FILES['archivo']
+        
+        # Crear la carpeta si no existe
+        rendiciones_dir = settings.MEDIA_ROOT / 'rendiciones'
+        rendiciones_dir.mkdir(parents=True, exist_ok=True)
+        
+        fs = FileSystemStorage(location=str(rendiciones_dir))
+        filename = fs.save(archivo.name, archivo)
+        file_path = fs.path(filename)
+        
+        return JsonResponse({'ruta': file_path, 'nombre': archivo.name}, status=201)
+    return JsonResponse({'error': 'No se proporcionó archivo'}, status=400)
+
+@csrf_exempt
+def rendicion_analizar_batch(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            rutas = data.get('rutas', [])
+            resultados = []
+            for ruta in rutas:
+                if os.path.exists(ruta):
+                    analisis = analizar_documento_rendicion(ruta)
+                    resultados.append(analisis)
+                else:
+                    resultados.append({"monto": 0, "observaciones": "Archivo no encontrado en servidor"})
+            return JsonResponse({'resultados': resultados})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+    return JsonResponse({'error': 'Método no permitido'}, status=405)
